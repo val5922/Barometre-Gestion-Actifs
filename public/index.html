@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baromètre des marchés</title>
+<meta name="description" content="Baromètre synthétique 0-100 construit à partir de 7 indicateurs macroéconomiques et financiers, mis à jour automatiquement.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --text: #16191f; --muted: #5d6470; --line: #e3e6eb;
+  --accent: #2f5bd3; --sp: #8a6d1f; --cac: #6b4fa8;
+  --bad: #c8453b; --mid: #c98a1a; --good: #2e8a57;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115; --surface: #171a21; --text: #e8eaee; --muted: #9aa1ad; --line: #2a2f39;
+    --accent: #7c9cf0; --sp: #d4b35c; --cac: #b29be0;
+    --bad: #e2675d; --mid: #e3a73f; --good: #4fb87c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115; --surface: #171a21; --text: #e8eaee; --muted: #9aa1ad; --line: #2a2f39;
+  --accent: #7c9cf0; --sp: #d4b35c; --cac: #b29be0;
+  --bad: #e2675d; --mid: #e3a73f; --good: #4fb87c;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.55 Inter, system-ui, -apple-system, sans-serif;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 16px 64px; }
+header { margin-bottom: 28px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 30px; margin: 6px 0 6px; letter-spacing: -.01em; }
+h2 { font-size: 18px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+.grid { display: grid; gap: 16px; }
+.grid > * { min-width: 0; }
+html, body { overflow-x: hidden; }
+.hero { grid-template-columns: 300px 1fr; }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+
+.gauge { text-align: center; }
+.gauge svg { width: 100%; max-width: 240px; }
+.score-num { font-size: 52px; font-weight: 700; line-height: 1; margin-top: -58px; font-variant-numeric: tabular-nums; }
+.score-num small { font-size: 18px; color: var(--muted); font-weight: 500; }
+.verdict { display: inline-block; margin-top: 12px; padding: 4px 12px; border-radius: 99px; font-weight: 600; font-size: 13px; }
+.date { color: var(--muted); font-size: 13px; margin-top: 10px; }
+
+.signals h2 { margin-bottom: 12px; }
+.signals ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.signals li { display: flex; gap: 10px; align-items: baseline; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; transform: translateY(-1px); }
+
+.section { margin-top: 16px; }
+.head-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.toggles button {
+  font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+}
+.toggles button:disabled { cursor: default; }
+.toggles button.on { background: var(--text); color: var(--surface); border-color: var(--text); }
+.chart-box { position: relative; height: 340px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 0 8px 10px; }
+td { padding: 11px 8px; border-top: 1px solid var(--line); vertical-align: middle; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar { height: 8px; background: var(--line); border-radius: 4px; min-width: 80px; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.ind-name { font-weight: 600; }
+.ind-meth { color: var(--muted); font-size: 12.5px; }
+@media (max-width: 640px) {
+  .hide-sm { display: none; }
+  .card { padding: 16px; }
+  td, th { padding-left: 4px; padding-right: 4px; }
+  .bar { min-width: 40px; }
+  .chart-box { height: 280px; }
+  h1 { font-size: 26px; }
+}
+
+.method { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.method h3 { font-size: 14px; margin: 0 0 6px; }
+.method p { margin: 0; color: var(--muted); font-size: 14px; }
+footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">KEDGE BS · Gestion d'actifs 2025-2026</div>
+    <h1>Baromètre des marchés</h1>
+    <p class="sub">La situation économique et financière résumée en un score de 0 à 100, construit à partir de 7 indicateurs et mis à jour automatiquement chaque jour.</p>
+  </header>
+
+  <div class="grid hero">
+    <div class="card gauge">
+      <svg viewBox="0 0 200 120" aria-hidden="true">
+        <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="var(--line)" stroke-width="16" stroke-linecap="round"/>
+        <path id="arc" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="16" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+      </svg>
+      <div class="score-num"><span id="score">–</span><small>/100</small></div>
+      <div class="verdict" id="verdict">–</div>
+      <div class="date" id="date"></div>
+    </div>
+    <div class="card signals">
+      <h2>Les signaux du jour</h2>
+      <ul id="signals"></ul>
+    </div>
+  </div>
+
+  <div class="card section">
+    <div class="head-row">
+      <div>
+        <h2>Évolution du score</h2>
+        <p class="sub">Score global de 0 à 100. Cliquez sur un indicateur pour comparer sa note au score.</p>
+      </div>
+      <div class="toggles" id="periods">
+        <button data-m="6">6 mois</button><button data-m="12">1 an</button><button data-m="0" class="on">Tout</button>
+      </div>
+    </div>
+    <div class="toggles" id="series" style="margin-bottom:12px"></div>
+    <div class="chart-box"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="card section">
+    <div class="head-row">
+      <div>
+        <h2>Composantes du score</h2>
+        <p class="sub">Chaque indicateur est noté de 0 (défavorable) à 100 (favorable), puis pondéré.</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Indicateur</th><th class="hide-sm" style="text-align:right">Valeur</th><th>Note</th><th style="text-align:right">Poids</th><th class="hide-sm" style="text-align:right">Contribution</th></tr></thead>
+      <tbody id="table"></tbody>
+    </table>
+  </div>
+
+  <div class="card section">
+    <h2 style="margin-bottom:14px">Méthode</h2>
+    <div class="grid method">
+      <div><h3>1. Collecte</h3><p>Un script Python télécharge chaque jour les données depuis FRED (base publique de la Réserve fédérale de St. Louis) et Yahoo Finance. La mise à jour est automatisée par GitHub Actions.</p></div>
+      <div><h3>2. Normalisation</h3><p>Quatre méthodes ramènent chaque indicateur sur 0-100 : Min-Max à bornes fixes, Z-score, distance à une cible et inversion pour les indicateurs de risque.</p></div>
+      <div><h3>3. Pondération</h3><p>Risque 35 % (VIX, spread High Yield), taux 30 % (courbe, taux 2 ans), actions 25 % (S&amp;P 500, CAC 40), inflation 10 %. Les indicateurs les plus réactifs et ceux qui anticipent pèsent le plus.</p></div>
+      <div><h3>4. Lecture</h3><p>Au-dessus de 65 : environnement favorable. Entre 35 et 65 : neutre. Sous 35 : environnement dégradé.</p></div>
+    </div>
+  </div>
+
+  <footer>
+    Sources : <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener">FRED</a> (T10Y2Y, BAMLH0A0HYM2, CPIAUCSL, DGS2) · <a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a> (^VIX, ^GSPC, ^FCHI). Projet pédagogique, ne constitue pas un conseil en investissement.
+  </footer>
+</div>
+
+<script>
+const INDICATEURS = {
+  VIX:           { court: "VIX", nom: "VIX", meth: "Stress du marché · Min-Max inversé", fmt: v => v.toFixed(1) },
+  SP500:         { court: "S&P 500", nom: "S&P 500", meth: "Tendance vs moyenne 200 j · Z-score", fmt: v => v.toLocaleString("fr-FR") },
+  CAC40:         { court: "CAC 40", nom: "CAC 40", meth: "Tendance vs moyenne 200 j · Z-score", fmt: v => v.toLocaleString("fr-FR") },
+  COURBE_10A_2A: { court: "Courbe des taux", nom: "Courbe des taux 10 ans − 2 ans", meth: "Risque de récession · Min-Max", fmt: v => (v > 0 ? "+" : "") + v.toFixed(2) + " pt" },
+  SPREAD_HY:     { court: "Spread HY", nom: "Spread High Yield", meth: "Stress du crédit · Min-Max inversé", fmt: v => v.toFixed(2) + " %" },
+  INFLATION:     { court: "Inflation", nom: "Inflation US (sur 1 an)", meth: "Écart à la cible de 2 % · Cible", fmt: v => v.toFixed(2) + " %" },
+  TAUX_2A:       { court: "Taux 2 ans", nom: "Taux 2 ans US", meth: "Anticipations de la Fed · Z-score inversé", fmt: v => v.toFixed(2) + " %" },
+};
+
+const PALETTE = ["#d1495b", "#8a6d1f", "#6b4fa8", "#1f8a8a", "#e07b39", "#5a8f29", "#b5477f"];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const couleur = s => s >= 65 ? css("--good") : s >= 35 ? css("--mid") : css("--bad");
+const zone = s => s >= 65 ? "Favorable" : s >= 35 ? "Neutre" : "Dégradé";
+const dateFr = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+fetch("data.json").then(r => r.json()).then(D => {
+  const n = D.dates.length - 1;
+  const score = D.score[n];
+
+  // Jauge
+  document.getElementById("score").textContent = Math.round(score);
+  const arc = document.getElementById("arc");
+  arc.setAttribute("stroke-dasharray", `${score} 100`);
+  arc.setAttribute("stroke", couleur(score));
+  const v = document.getElementById("verdict");
+  v.textContent = zone(score);
+  v.style.color = couleur(score);
+  v.style.background = couleur(score) + "1f";
+  document.getElementById("date").textContent = "Mis à jour le " + dateFr(D.mise_a_jour);
+
+  // Signaux du jour : variation sur 1 mois, meilleur et pire indicateur
+  const lignes = [];
+  const iMois = Math.max(0, n - 21);
+  const delta = score - D.score[iMois];
+  lignes.push([couleur(score), `Score de <b>${Math.round(score)}/100</b>, ${delta >= 0 ? "en hausse" : "en baisse"} de ${Math.abs(delta).toFixed(0)} points sur un mois.`]);
+  const tri = Object.keys(D.poids).map(k => [k, D.notes[k][n]]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
+  tri.slice(0, 2).forEach(([k, s]) => lignes.push([couleur(s), `<b>${INDICATEURS[k].nom}</b> soutient le score (${Math.round(s)}/100).`]));
+  tri.slice(-2).reverse().forEach(([k, s]) => lignes.push([couleur(s), `<b>${INDICATEURS[k].nom}</b> pèse sur le score (${Math.round(s)}/100).`]));
+  const max = Math.max(...D.score), iMax = D.score.indexOf(max);
+  lignes.push([css("--muted"), `Plus haut historique : ${Math.round(max)}/100 le ${dateFr(D.dates[iMax])}.`]);
+  document.getElementById("signals").innerHTML = lignes.map(([c, t]) => `<li><span class="dot" style="background:${c}"></span><span>${t}</span></li>`).join("");
+
+  // Tableau des composantes
+  document.getElementById("table").innerHTML = Object.keys(D.poids).map(k => {
+    const s = D.notes[k][n], p = D.poids[k], I = INDICATEURS[k];
+    return `<tr>
+      <td><div class="ind-name">${I.nom}</div><div class="ind-meth">${I.meth}</div></td>
+      <td class="num hide-sm">${I.fmt(D.valeurs_brutes[k])}</td>
+      <td style="width:40%"><div style="display:flex;gap:10px;align-items:center"><div class="bar" style="flex:1"><i style="width:${s}%;background:${couleur(s)}"></i></div><span class="num" style="width:24px">${Math.round(s)}</span></div></td>
+      <td class="num">${p} %</td>
+      <td class="num hide-sm">${(s * p / 100).toFixed(1)}</td>
+    </tr>`;
+  }).join("") + `<tr><td class="ind-name">Score global</td><td class="hide-sm"></td><td><b>${Math.round(score)} / 100</b></td><td class="num">100 %</td><td class="num hide-sm"><b>${score.toFixed(1)}</b></td></tr>`;
+
+  // Graphique
+  const ctx = document.getElementById("chart");
+  const zonesPlugin = {
+    id: "zones",
+    beforeDatasetsDraw(c) {
+      const { ctx, chartArea: a, scales: { y } } = c;
+      ctx.save();
+      [[65, 100, "--good"], [35, 65, "--mid"], [0, 35, "--bad"]].forEach(([lo, hi, v]) => {
+        ctx.fillStyle = css(v) + "12";
+        ctx.fillRect(a.left, y.getPixelForValue(hi), a.right - a.left, y.getPixelForValue(lo) - y.getPixelForValue(hi));
+      });
+      ctx.restore();
+    }
+  };
+  const grille = css("--line"), texte = css("--muted");
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: D.dates,
+      datasets: [
+        { label: "Score", data: D.score, borderColor: css("--accent"), borderWidth: 2.2, yAxisID: "y" },
+        ...Object.keys(D.poids).map((k, i) => ({
+          label: INDICATEURS[k].nom, data: D.notes[k], borderColor: PALETTE[i],
+          borderWidth: 1.3, yAxisID: "y", hidden: true, spanGaps: false,
+        })),
+      ]
+    },
+    options: {
+      maintainAspectRatio: false, animation: false,
+      elements: { point: { radius: 0, hitRadius: 6 } },
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: i => dateFr(i[0].label), label: i => ` ${i.dataset.label} : ${i.parsed.y.toFixed(1)}` } }
+      },
+      scales: {
+        x: { ticks: { color: texte, maxTicksLimit: innerWidth < 640 ? 4 : 7, maxRotation: 0, callback(v) { const d = this.getLabelForValue(v); return new Date(d).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }); } }, grid: { display: false } },
+        y: { min: 0, max: 100, position: "left", ticks: { color: texte, stepSize: 25 }, grid: { color: grille } },
+      }
+    },
+    plugins: [zonesPlugin]
+  });
+
+  // Boutons de période et de séries
+  document.querySelectorAll("#periods button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("#periods button").forEach(x => x.classList.toggle("on", x === b));
+    const m = +b.dataset.m;
+    chart.options.scales.x.min = m ? D.dates[Math.max(0, n - Math.round(m * 21))] : undefined;
+    chart.update();
+  });
+  const zoneSeries = document.getElementById("series");
+  zoneSeries.innerHTML = `<button class="on" disabled style="border-color:${css("--accent")};background:${css("--accent")};color:#fff">Score</button>` +
+    Object.keys(D.poids).map((k, i) => `<button data-s="${i + 1}"><span class="dot" style="display:inline-block;margin-right:6px;background:${PALETTE[i]}"></span>${INDICATEURS[k].court}</button>`).join("");
+  zoneSeries.querySelectorAll("button[data-s]").forEach(b => b.onclick = () => {
+    b.classList.toggle("on");
+    chart.setDatasetVisibility(+b.dataset.s, b.classList.contains("on"));
+    chart.update();
+  });
+});
+</script>
+</body>
+</html>
