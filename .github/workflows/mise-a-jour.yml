@@ -1,9 +1,11 @@
-# Mise à jour automatique du baromètre, du lundi au samedi à 7h (heure de Paris en hiver).
+# Mise à jour automatique du baromètre, du lundi au vendredi à 21h30 UTC
+# (22h30 à Paris en hiver, 23h30 en été) : après la clôture de Wall Street (22h à Paris),
+# pour avoir les cours définitifs du jour.
 name: Mise à jour du baromètre
 
 on:
   schedule:
-    - cron: "0 6 * * 1-6"
+    - cron: "30 21 * * 1-5"
   workflow_dispatch: # permet aussi de lancer la mise à jour à la main depuis GitHub
 
 permissions:
